@@ -6,9 +6,18 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "beartype>=0.22.9",
+    "ipykernel>=7.2.0",
     "jax>=0.9.0.1",
     "jaxtyping>=0.3.9",
     "numpy>=2.4.2",
     "scipy>=1.17.0",
     "tensorly>=0.9.0",
 ]
+
+[dependency-groups]
+dev = [
+    "untangle",
+]
+
+[tool.uv.sources]
+untangle = { workspace = true }

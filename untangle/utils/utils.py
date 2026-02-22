@@ -29,6 +29,7 @@ def collect_information(
     function: Callable, 
     N: int, 
     m: int, 
+    range = (0, 1),
     key: Array = get_random_key(),
 ) -> Tuple[
     Float[Array, 'N m'], 
@@ -37,8 +38,10 @@ def collect_information(
 ]:
     assert(callable(function))
 
+    lo, hi = range
+
     jacobian = jax.jacobian(function)
-    X = jax.random.uniform(key, shape=(N, m))
+    X = jax.random.uniform(key, shape=(N, m), minval=lo, maxval=hi)
     Y = jnp.stack([function(x) for x in X], axis=0)
     J = jnp.stack([jacobian(x) for x in X], axis=2)
     return X, Y, J
