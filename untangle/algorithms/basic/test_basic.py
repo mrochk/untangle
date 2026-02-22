@@ -2,7 +2,8 @@ import unittest
 import jax, jax.numpy as jnp
 
 from untangle.algorithms import decoupling_basic
-from untangle.utils import get_random_key, collect_information, inference, search_rank
+from untangle.algorithms.basic import inference
+from untangle.utils import get_random_key, collect_information, search_rank
 
 class TestDecouplingBasic(unittest.TestCase):
 

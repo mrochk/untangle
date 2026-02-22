@@ -1,34 +1,46 @@
 '''Implementation of the paper https://arxiv.org/pdf/1410.4060.'''
 
-from jax import Array
-import jax.numpy as jnp
-from typing import Tuple
-from jax.typing import ArrayLike
+import jax, jax.numpy as jnp
 from scipy.linalg import block_diag
-from numpy.polynomial import Polynomial
 
-from untangle.utils import cpd
+from beartype import beartype
+from beartype.typing import Tuple, Callable
+from jaxtyping import jaxtyped, Array, Float, ArrayLike
 
+from untangle.utils import cpd, make_polynomials
+
+def inference(
+    W: Float[ArrayLike, 'n r'], 
+    V: Float[ArrayLike, 'm r'], 
+    coefs: Float[ArrayLike, 'r d+1'],
+) -> Callable:
+    return lambda x: W @ make_polynomials(coefs)(V.T @ x)
+
+@jaxtyped(typechecker=beartype)
 def decoupling_basic(
-    X: ArrayLike, 
-    Y: ArrayLike, 
-    J: ArrayLike, 
+    X: Float[Array, 'N m'], 
+    Y: Float[Array, 'N n'], 
+    J: Float[Array, 'n m N'], 
     rank: int,
     degree: int = 3,
     verbose: bool = False,
-    **args,
-) -> Tuple[Array, Array, Tuple[Polynomial, ...]]:
+    **tensorly_cpd_kwargs,
+) -> Tuple[
+    Float[Array, 'n r'], 
+    Float[Array, 'm r'], 
+    Float[Array, 'r d'],
+]:
     '''Basic decoupling algorithm as described in https://arxiv.org/pdf/1410.4060.
 
     Args description (below) assumes the initial function takes m inputs and returns n outputs.
 
     Args:
-        X (ArrayLike): Operating points, of shape (N, m).
-        Y (ArrayLike): Function outputs for X, of shape (N, n).
-        J (ArrayLike): Stacked jacobian of shape (n, m, N).
-        rank (int): Rank of the CPD.
-        degree (int, optional): Degree of internal polynomials. Defaults to 3.
-        verbose (bool, optional): Verbose output yes/no. Defaults to False.
+        X: Operating points, of shape (N, m).
+        Y: Function outputs for X, of shape (N, n).
+        J: Stacked jacobian of shape (n, m, N).
+        rank: Rank of the CPD.
+        degree: Degree of internal polynomials. Defaults to 3.
+        verbose: Verbose output yes/no. Defaults to False.
 
     All additional arguments are passed to tensorly CP decomposition function.
 
@@ -38,14 +50,22 @@ def decoupling_basic(
     log = lambda *values: print(*values) if verbose else None
 
     log('Computing CP decomposition of J...')
-    _, (W, V, H) = cpd(tensor=J, rank=rank, verbose=int(verbose), **args)
+    _, (W, V, H) = cpd(tensor=J, rank=rank, verbose=int(verbose), **tensorly_cpd_kwargs)
+    W = jnp.array(W); V = jnp.array(V)
 
-    log('Recovering internal univariates...')
-    g = recover_internals(X, Y, W, V, degree)
+    log('Recovering internal univariates coefficients...')
+    coefs = find_internals_coefficients(X, Y, W, V, degree)
 
-    return W, V, g
+    return W, V, coefs
 
-def recover_internals(X: ArrayLike, Y: ArrayLike, W: ArrayLike, V: ArrayLike, degree: int):
+def find_internals_coefficients(
+    X: Float[Array, 'N m'],
+    Y: Float[Array, 'N n'],
+    W: Float[Array, 'n r'],
+    V: Float[Array, 'm r'],
+    degree: int,
+) -> Float[Array, 'r d+1']:
+
     N = X.shape[0]
     rank = W.shape[1]
 
@@ -61,7 +81,7 @@ def recover_internals(X: ArrayLike, Y: ArrayLike, W: ArrayLike, V: ArrayLike, de
 
     Xk = jnp.concatenate([vandermonde_diag(z, degree) for z in Z], axis=0)
 
-    coefs, _, _, _ = jnp.linalg.lstsq(W_diag @ Xk, jnp.concatenate(Y))
-    coefs = coefs.reshape((rank, -1))
+    coefs = jnp.linalg.lstsq(W_diag @ Xk, jnp.concatenate(Y))[0].reshape(rank, -1)
+    assert tuple(coefs.shape) == (rank, degree+1)
 
-    return tuple([Polynomial(c) for c in coefs])
+    return coefs

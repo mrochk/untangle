@@ -1,9 +1,11 @@
 import random
-from jax import Array
 import jax, jax.numpy as jnp
-from jax.typing import ArrayLike
-from typing import Iterable, Callable
+from functools import partial
 from tensorly.decomposition import parafac
+
+from beartype import beartype
+from beartype.typing import Callable, Tuple
+from jaxtyping import jaxtyped, Float, Array, ArrayLike
 
 cpd = parafac
 
@@ -22,7 +24,17 @@ def search_rank(tensor: ArrayLike, max_rank: int = 100, **args):
         if last_error < 0.01: return rank
     return -1
 
-def collect_information(function: Callable, N: int, m: int, key: Array = get_random_key()):
+@jaxtyped(typechecker=beartype)
+def collect_information(
+    function: Callable, 
+    N: int, 
+    m: int, 
+    key: Array = get_random_key(),
+) -> Tuple[
+    Float[Array, 'N m'], 
+    Float[Array, 'N n'], 
+    Float[Array, 'n m N'],
+]:
     assert(callable(function))
 
     jacobian = jax.jacobian(function)
@@ -31,8 +43,10 @@ def collect_information(function: Callable, N: int, m: int, key: Array = get_ran
     J = jnp.stack([jacobian(x) for x in X], axis=2)
     return X, Y, J
 
-def inference(W: Array, V: Array, g: Iterable[Callable]) -> Callable:
-    assert all([callable(gi) for gi in g])
+def make_polynomial(coefs: Float[Array, 'd']) -> Callable:
+    return partial(jnp.polyval, jnp.flip(coefs))
 
-    g_inf = lambda x: jnp.array([gi(xi) for gi, xi in zip(g, x)])
-    return lambda x: W @ g_inf(V.T @ x)
+def make_polynomials(coefs: Float[Array, 'n d']) -> Callable:
+    polynomials = [make_polynomial(c) for c in coefs]
+    def _(x): return jnp.array([f(xi) for f, xi in zip(polynomials, x)])
+    return _
