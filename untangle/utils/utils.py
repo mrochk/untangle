@@ -1,13 +1,10 @@
 import random
 import jax, jax.numpy as jnp
 from functools import partial
-from tensorly.decomposition import parafac
 
 from beartype import beartype
 from beartype.typing import Callable, Tuple
 from jaxtyping import jaxtyped, Float, Array, ArrayLike
-
-cpd = parafac
 
 def unfold_kolda(tensor: ArrayLike, mode: int) -> Array:
     '''Tensor unfolding as defined in "Tensor decompositions and applications." from Kolda and Bader.'''
@@ -16,13 +13,6 @@ def unfold_kolda(tensor: ArrayLike, mode: int) -> Array:
 def get_random_key() -> Array:
     random_int = random.randint(0, 1000)
     return jax.random.key(random_int)
-
-def search_rank(tensor: ArrayLike, max_rank: int = 100, **args):
-    for rank in range(1, max_rank+1):
-        _, errors = cpd(tensor, rank, return_errors=True, **args)
-        last_error = errors[-1]
-        if last_error < 0.01: return rank
-    return -1
 
 @jaxtyped(typechecker=beartype)
 def collect_information(

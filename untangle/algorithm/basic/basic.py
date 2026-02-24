@@ -7,12 +7,14 @@ from beartype import beartype
 from beartype.typing import Tuple, Callable
 from jaxtyping import jaxtyped, Array, Float, ArrayLike
 
-from untangle.utils import cpd, make_polynomials
+from untangle.decomposition import cpd
+from untangle.utils import make_polynomials
 
+@jaxtyped(typechecker=beartype)
 def inference(
     W: Float[ArrayLike, 'n r'], 
     V: Float[ArrayLike, 'm r'], 
-    coefs: Float[ArrayLike, 'r d+1'],
+    coefs: Float[ArrayLike, 'r d'],
 ) -> Callable:
     return lambda x: W @ make_polynomials(coefs)(V.T @ x)
 
@@ -50,7 +52,7 @@ def decoupling_basic(
     log = lambda *values: print(*values) if verbose else None
 
     log('Computing CP decomposition of J...')
-    _, (W, V, H) = cpd(tensor=J, rank=rank, verbose=int(verbose), **tensorly_cpd_kwargs)
+    (weights, (W, V, H)), _ = cpd(tensor=J, rank=rank, **tensorly_cpd_kwargs)
     W = jnp.array(W); V = jnp.array(V)
 
     log('Recovering internal univariates coefficients...')
@@ -64,7 +66,7 @@ def find_internals_coefficients(
     W: Float[Array, 'n r'],
     V: Float[Array, 'm r'],
     degree: int,
-) -> Float[Array, 'r d+1']:
+) -> Float[Array, 'r d']:
 
     N = X.shape[0]
     rank = W.shape[1]
