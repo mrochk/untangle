@@ -1,7 +1,9 @@
 '''Implementation of the paper https://arxiv.org/pdf/1410.4060.'''
 
 import jax, jax.numpy as jnp
+import multiprocessing as mp
 from scipy.linalg import block_diag
+from concurrent.futures import ThreadPoolExecutor
 
 from beartype import beartype
 from beartype.typing import Tuple, Callable
@@ -25,8 +27,10 @@ def decoupling_basic(
     J: Float[Array, 'n m N'], 
     rank: int,
     degree: int = 3,
-    verbose: bool = False,
-    **tensorly_cpd_kwargs,
+    n_init: int = mp.cpu_count(),
+    verbose: int = 0,
+    normalize_factors: bool = False,
+    **cpd_kwargs,
 ) -> Tuple[
     Float[Array, 'n r'], 
     Float[Array, 'm r'], 
@@ -49,13 +53,23 @@ def decoupling_basic(
     Returns W, V and g.
     '''    
     
-    log = lambda *values: print(*values) if verbose else None
+    log = lambda *values: print(*values, flush=True) if verbose > 0 else None
 
-    log('Computing CP decomposition of J...')
-    (weights, (W, V, H)), _ = cpd(tensor=J, rank=rank, **tensorly_cpd_kwargs)
+    log(f'Computing CP decomposition of J with rank {rank} and {n_init} (parallel) inits...')
+
+    def run_once(i):
+        res, errors = cpd(tensor=J, rank=rank, verbose=(verbose > 1), normalize_factors=normalize_factors, **cpd_kwargs)
+        log(f'run {i}: {errors[-1]:.5f} ({len(errors)} iters)')
+        return errors[-1], res
+
+    with ThreadPoolExecutor() as ex: results = list(ex.map(run_once, range(n_init)))
+
+    best_error, (weights, (W, V, H)) = min(results, key=lambda x: x[0])
+    log(f'best error = {best_error:.5f}')
+
     W = jnp.array(W); V = jnp.array(V)
 
-    log('Recovering internal univariates coefficients...')
+    log('Recovering internal coefficients...')
     coefs = find_internals_coefficients(X, Y, W, V, degree)
 
     return W, V, coefs
