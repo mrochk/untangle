@@ -1,1 +1,2 @@
-from .decomposition import cpd, cpd_polynomial_constraint, search_rank
+from .cpd import cpd
+from .parallel import run_many_cpd

@@ -719,19 +719,6 @@ wheels = [
 ]
 
 [[package]]
-name = "tensorly"
-version = "0.9.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "scipy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/57/39/76a859505dc5331cf43baba1fc011e85184c8ad0dbe01e6b01fe0f935ea2/tensorly-0.9.0.tar.gz", hash = "sha256:9b970dde47e2267a17b66a1444113e879c0bb77fb22f497a4207eb2b548ff792", size = 7327121, upload-time = "2024-11-12T14:54:20.504Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c3/ad/83380fb3c85ddf68c509059cf328374c1878f87382070475abc72867c7ba/tensorly-0.9.0-py3-none-any.whl", hash = "sha256:a393022ff1616a36c021496f46a955d94234d6bc8c42793f477a6be8849f4873", size = 7414316, upload-time = "2024-11-12T14:54:17.431Z" },
-]
-
-[[package]]
 name = "tornado"
 version = "6.5.4"
 source = { registry = "https://pypi.org/simple" }
@@ -769,9 +756,7 @@ dependencies = [
     { name = "jax" },
     { name = "jaxtyping" },
     { name = "matplotlib" },
-    { name = "numpy" },
     { name = "scipy" },
-    { name = "tensorly" },
 ]
 
 [package.dev-dependencies]
@@ -786,9 +771,7 @@ requires-dist = [
     { name = "jax", specifier = ">=0.9.0.1" },
     { name = "jaxtyping", specifier = ">=0.3.9" },
     { name = "matplotlib", specifier = ">=3.10.8" },
-    { name = "numpy", specifier = ">=2.4.2" },
     { name = "scipy", specifier = ">=1.17.0" },
-    { name = "tensorly", specifier = ">=0.9.0" },
 ]
 
 [package.metadata.requires-dev]

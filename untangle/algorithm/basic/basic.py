@@ -3,22 +3,13 @@
 import jax, jax.numpy as jnp
 import multiprocessing as mp
 from scipy.linalg import block_diag
-from concurrent.futures import ThreadPoolExecutor
 
 from beartype import beartype
 from beartype.typing import Tuple, Callable
 from jaxtyping import jaxtyped, Array, Float, ArrayLike
 
-from untangle.decomposition import cpd
+from untangle.decomposition import run_many_cpd
 from untangle.utils import make_polynomials
-
-@jaxtyped(typechecker=beartype)
-def inference(
-    W: Float[ArrayLike, 'n r'], 
-    V: Float[ArrayLike, 'm r'], 
-    coefs: Float[ArrayLike, 'r d'],
-) -> Callable:
-    return lambda x: W @ make_polynomials(coefs)(V.T @ x)
 
 @jaxtyped(typechecker=beartype)
 def decoupling_basic(
@@ -29,12 +20,9 @@ def decoupling_basic(
     degree: int = 3,
     n_init: int = mp.cpu_count(),
     verbose: int = 0,
-    normalize_factors: bool = False,
-    **cpd_kwargs,
 ) -> Tuple[
-    Float[Array, 'n r'], 
-    Float[Array, 'm r'], 
-    Float[Array, 'r d'],
+    Callable,
+    Tuple[Float[Array, 'n r'], Float[Array, 'm r'], Float[Array, 'r d']],
 ]:
     '''Basic decoupling algorithm as described in https://arxiv.org/pdf/1410.4060.
 
@@ -50,29 +38,21 @@ def decoupling_basic(
 
     All additional arguments are passed to tensorly CP decomposition function.
 
-    Returns W, V and g.
+    Returns W, V and internal coefs of g.
     '''    
     
     log = lambda *values: print(*values, flush=True) if verbose > 0 else None
-
     log(f'Computing CP decomposition of J with rank {rank} and {n_init} (parallel) inits...')
 
-    def run_once(i):
-        res, errors = cpd(tensor=J, rank=rank, verbose=(verbose > 1), normalize_factors=normalize_factors, **cpd_kwargs)
-        log(f'run {i}: {errors[-1]:.5f} ({len(errors)} iters)')
-        return errors[-1], res
-
-    with ThreadPoolExecutor() as ex: results = list(ex.map(run_once, range(n_init)))
-
-    best_error, (weights, (W, V, H)) = min(results, key=lambda x: x[0])
-    log(f'best error = {best_error:.5f}')
-
-    W = jnp.array(W); V = jnp.array(V)
+    factors, weights = run_many_cpd(J, rank, verbose=verbose, n=n_init)
+    W, V, H = factors
 
     log('Recovering internal coefficients...')
     coefs = find_internals_coefficients(X, Y, W, V, degree)
 
-    return W, V, coefs
+    f = inference(W, V, coefs)
+
+    return f, (W, V, coefs)
 
 def find_internals_coefficients(
     X: Float[Array, 'N m'],
@@ -101,3 +81,11 @@ def find_internals_coefficients(
     assert tuple(coefs.shape) == (rank, degree+1)
 
     return coefs
+
+@jaxtyped(typechecker=beartype)
+def inference(
+    W: Float[ArrayLike, 'n r'], 
+    V: Float[ArrayLike, 'm r'], 
+    coefs: Float[ArrayLike, 'r d'],
+) -> Callable:
+    return lambda x: W @ make_polynomials(coefs)(V.T @ x)

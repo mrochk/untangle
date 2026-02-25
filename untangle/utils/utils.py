@@ -7,7 +7,7 @@ from beartype.typing import Callable, Tuple
 from jaxtyping import jaxtyped, Float, Array, ArrayLike
 
 def unfold_kolda(tensor: ArrayLike, mode: int) -> Array:
-    '''Tensor unfolding as defined in "Tensor decompositions and applications." from Kolda and Bader.'''
+    '''Tensor unfolding as defined in "Tensor decompositions and applications" from Kolda and Bader.'''
     return jnp.reshape(jnp.moveaxis(tensor, mode, 0), shape=(tensor.shape[mode], -1), order='F')
 
 def get_random_key() -> Array:
@@ -43,3 +43,19 @@ def make_polynomials(coefs: Float[Array, 'n d']) -> Callable:
     polynomials = [make_polynomial(c) for c in coefs]
     def _(x): return jnp.array([f(xi) for f, xi in zip(polynomials, x)])
     return _
+
+def reconstruct_tensor(factors, weights):
+    W, V, H = factors
+
+    N, m, n = H.shape[0], V.shape[0], W.shape[0]
+    tensor = jnp.zeros(shape=(n, m, N))
+
+    rank = W.shape[1]
+    for r in range(rank):
+        rank1 = W[:, r][:, None, None] * V[:, r][None, :, None] * H[:, r][None, None, :]
+        tensor += weights[r] * rank1
+
+    return tensor
+
+def relative_error(tensor, factors, weights):
+    return jnp.linalg.norm(tensor - reconstruct_tensor(factors, weights)) / jnp.linalg.norm(tensor)
