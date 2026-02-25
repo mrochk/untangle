@@ -1,6 +1,6 @@
 # `untangle`
 
-Python package for decoupling multivariate functions using tensor decompositions. 
+Python package for decoupling multivariate functions using tensor decompositions. Written in JAX. 
 
 To run the tests:
 ```bash

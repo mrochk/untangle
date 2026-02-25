@@ -12,12 +12,16 @@ from tensorly.decomposition._cp import (
 def error_calc_(tensor, norm_tensor, weights, factors, mttkrp):
     return error_calc(tensor, norm_tensor, weights, factors, None, None, mttkrp)
 
-def search_rank(tensor: Float[Array, 'n m N'], max_rank: int = 100, **args):
+def search_rank(tensor: Float[Array, 'n m N'], max_rank: int = 50, tol: float = 0.001, stop: bool = True, **args):
+    all_errors = []
+
     for rank in range(1, max_rank+1):
         _, errors = cpd(tensor, rank, **args)
         last_error = errors[-1]
-        if last_error < 0.01: return rank
-    return 0
+        all_errors.append(last_error)
+        if stop and last_error < tol: return rank, all_errors
+
+    return all_errors
 
 @jaxtyped(typechecker=beartype)
 def cpd(
@@ -146,10 +150,7 @@ def cpd(
             weights, factors = cp_normalize((weights, factors))
 
     W, V, H = factors
-    W = jnp.array(W)
-    V = jnp.array(V)
-    H = jnp.array(H)
-
+    W, V, H = jnp.array(W), jnp.array(V), jnp.array(H)
     return (weights, (W, V, H)), errors
 
 @jaxtyped(typechecker=beartype)
