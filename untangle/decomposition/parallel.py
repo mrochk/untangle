@@ -20,7 +20,7 @@ def run_many_cpd(tensor, rank, n: int = mp.cpu_count(), verbose: int = 0):
     with ThreadPoolExecutor() as ex:
         futures = [ex.submit(run_once, i) for i in range(n)]
 
-        with tqdm(total=n, desc='CPD') as pbar:
+        with tqdm(total=n, desc='Computing CPD') as pbar:
             for future in as_completed(futures):
                 results.append(future.result())
                 pbar.update(1)

@@ -1,2 +1,1 @@
-from .basic import decoupling_basic
 from .cmtf_ssd import decoupling_CMTF_SSD

@@ -2,7 +2,7 @@ import jax, jax.numpy as jnp
 import matplotlib.pyplot as plt
 from scipy.interpolate import make_smoothing_spline
 
-from untangle.algorithm import CMTF_SSD
+from untangle.algorithm import decoupling_CMTF_SSD
 from untangle.utils import collect_information
 
 def fit_internals(Z, R):
@@ -31,7 +31,7 @@ def f(u):
 
 X, Y, J = collect_information(f, N, n)
 
-W, V, H, R = CMTF_SSD(J, Y, X, rank, verbose=1)
+W, V, H, R = decoupling_CMTF_SSD(J, Y, X, rank, verbose=1)
 
 Z = X @ V
 

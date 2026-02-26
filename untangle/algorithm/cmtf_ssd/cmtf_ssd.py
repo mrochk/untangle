@@ -33,7 +33,7 @@ def normalize_columns_V(W: Float[Array, 'n r'], V: Float[Array, 'm r']):
     return W, V
 
 @jaxtyped(typechecker=beartype)
-def CMTF_SSD(
+def decoupling_CMTF_SSD(
     J: Float[Array, 'n m N'],
     Y: Float[Array, 'N n'],
     X: Float[Array, 'N m'],
@@ -54,11 +54,7 @@ def CMTF_SSD(
     min_error = float('inf')
 
     for iteration in range(max_iters):
-        W = CMTF_lstsq(
-            X1=khatri_rao(H, V),
-            Y1=unfold_kolda(J, 0),
-            X2=R, Y2=Y, lam=lam,
-        )
+        W = CMTF_lstsq(X1=khatri_rao(H, V), Y1=unfold_kolda(J, 0), X2=R, Y2=Y, lam=lam)
         V = jnp.linalg.lstsq(khatri_rao(H, W), unfold_kolda(J, 1).T)[0].T
         W, V = normalize_columns_V(W, V)
 
