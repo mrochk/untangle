@@ -9,7 +9,7 @@ from beartype.typing import Tuple, Callable
 from jaxtyping import jaxtyped, Array, Float, ArrayLike
 
 from untangle.decomposition import run_many_cpd
-from untangle.utils import make_polynomials
+from untangle.utils import make_log, make_polynomials
 
 @jaxtyped(typechecker=beartype)
 def decoupling_basic(
@@ -34,18 +34,19 @@ def decoupling_basic(
         J: Stacked jacobian of shape (n, m, N).
         rank: Rank of the CPD.
         degree: Degree of internal polynomials. Defaults to 3.
-        verbose: Verbose output yes/no. Defaults to False.
+        n_init: Number of (parallel) decompositions to run. The best is kept and used for decoupling.
+        verbose: Verbose output from 0 to 2. Defaults to 0.
 
-    All additional arguments are passed to tensorly CP decomposition function.
-
-    Returns W, V and internal coefs of g.
+    Returns (f, (W, V, coefs)), where f is the callable decoupling, and (W, V, coefs) are the components.
     '''    
     
-    log = lambda *values: print(*values, flush=True) if verbose > 0 else None
+    log = make_log(verbose)
     log(f'Computing CP decomposition of J with rank {rank} and {n_init} (parallel) inits...')
 
     factors, weights = run_many_cpd(J, rank, verbose=verbose, n=n_init)
     W, V, H = factors
+
+    W = W * weights
 
     log('Recovering internal coefficients...')
     coefs = find_internals_coefficients(X, Y, W, V, degree)

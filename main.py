@@ -1,15 +1,23 @@
 import jax, jax.numpy as jnp
 
-from untangle.decomposition import cpd
-from untangle.utils import reconstruct_tensor
+from untangle.algorithm import decoupling_basic
+from untangle.utils import collect_information
 
-tensor = jax.random.normal(jax.random.key(42), (3, 4, 10))
+n = 3; m = 3; N = 10; rank = 4 # we know that this is a rank four
 
-factors, weights = cpd(tensor, 10, max_iters=1000, verbose=1)
+def f(u):
+    u1, u2, u3 = u
+    return jnp.array([
+        -4 * u1**2 + 8 * u1 * u3 + 6 * u1 - 3 * u3**2 - 8 * u3 - 6,
+        2 * u1**2 - 4 * u1 * u3 - 3 * u1 + u2**3 + 6 * u2**2 * u3 + 12 * u2 * u3**2 - u2 + 8 * u3**3 + 2 * u3**2 + u3 + 3,
+        -2 * u1**2 + 4 * u1 * u3 + 4 * u1 - 2 * u3**2 - 3 * u3 - u2 - 8,
+    ])
 
-res = reconstruct_tensor(factors, weights)
+X, Y, J = collect_information(f, N, n)
 
-print(tensor.shape, res.shape)
+decoupling, _ = decoupling_basic(X, Y, J, rank, verbose=1)
 
-print(tensor[0])
-print(res[0])
+x = jnp.array([0.5, 0.5, 0.5])
+
+print(f(x))
+print(decoupling(x))
