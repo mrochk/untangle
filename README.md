@@ -1,8 +1,7 @@
-# `untangle`
+# untangle
 
-Python package for decoupling multivariate functions using tensor decompositions. Written in JAX. 
+Tensor decoupling in Jax. Collection of algorithms for decoupling multivariate functions using tensor decompositions.
 
-To run the tests:
-```bash
-uv run -m unittest -v
-```
+This project was built using `uv` (https://docs.astral.sh/uv/). 
+
+To run the tests: `uv run -m unittest -v`.
