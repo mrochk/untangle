@@ -4,8 +4,8 @@ from scipy.interpolate import make_smoothing_spline
 from jaxtyping import jaxtyped, Array, Float
 from beartype import beartype
 
-from untangle.utils import get_random_key, unfold_kolda, relative_error, make_log
-from untangle.ops import khatri_rao
+from untangle.utils import get_random_key, relative_error, make_log
+from untangle.ops import unfold_kolda, khatri_rao
 
 def init(J: Float[Array, 'n m N'], rank: int):
     n, m, N = J.shape

@@ -22,7 +22,7 @@ class TestDecouplingBasic(unittest.TestCase):
 
         X, Y, J = collect_information(f, N, n)
 
-        decoupling, _ = decoupling_basic(X, Y, J, rank, verbose=1)
+        decoupling, _ = decoupling_basic(X, Y, J, rank)
 
         x = jax.random.uniform(get_random_key(), shape=m)
         truth, decoupled = f(x), decoupling(x)
@@ -45,7 +45,7 @@ class TestDecouplingBasic(unittest.TestCase):
 
         X, Y, J = collect_information(f, N, m)
 
-        decoupling, (W, V, g) = decoupling_basic(X, Y, J, rank=rank, degree=3, verbose=1)
+        decoupling, (W, V, g) = decoupling_basic(X, Y, J, rank=rank, degree=3)
 
         x = jax.random.uniform(get_random_key(), shape=m)
         truth = f(x)

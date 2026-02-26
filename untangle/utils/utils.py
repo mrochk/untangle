@@ -4,13 +4,9 @@ from functools import partial
 
 from beartype import beartype
 from beartype.typing import Callable, Tuple
-from jaxtyping import jaxtyped, Float, Array, ArrayLike
+from jaxtyping import jaxtyped, Float, Array
 
 def make_log(verbose: int): return lambda *args: print(*args) if verbose > 0 else None
-
-def unfold_kolda(tensor: ArrayLike, mode: int) -> Array:
-    '''Tensor unfolding as defined in "Tensor decompositions and applications" from Kolda and Bader.'''
-    return jnp.reshape(jnp.moveaxis(tensor, mode, 0), shape=(tensor.shape[mode], -1), order='F')
 
 def get_random_key() -> Array:
     random_int = random.randint(0, 1000)

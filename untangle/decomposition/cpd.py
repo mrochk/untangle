@@ -5,7 +5,8 @@ from jaxtyping import jaxtyped, Array, Float
 from beartype import beartype 
 from beartype.typing import Tuple 
 
-from untangle.utils import unfold_kolda, relative_error, get_random_key
+from untangle.utils import relative_error, get_random_key
+from untangle.ops import unfold_kolda
 from .common import init_cpd, solve_subproblem, column_normalize
 
 @jaxtyped(typechecker=beartype)
