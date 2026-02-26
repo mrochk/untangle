@@ -1,9 +1,25 @@
 import jax, jax.numpy as jnp
+import matplotlib.pyplot as plt
+from scipy.interpolate import make_smoothing_spline
 
-from untangle.algorithm import decoupling_basic
+from untangle.algorithm import CMTF_SSD
 from untangle.utils import collect_information
 
-n = 3; m = 3; N = 10; rank = 4 # we know that this is a rank four
+def fit_internals(Z, R):
+    internals = []
+    for rank in range(R.shape[1]):
+        rr = R[:, rank]
+        zr = Z[:, rank]
+        idx = jnp.argsort(zr)
+        g = make_smoothing_spline(zr[idx], rr[idx])
+        internals.append(g)
+
+    def g(x):
+        return jnp.array([gi(xi) for gi, xi in zip(internals, x)])
+
+    return g
+
+n = 3; m = 3; N = 100; rank = 4 # we know that this is a rank four
 
 def f(u):
     u1, u2, u3 = u
@@ -15,9 +31,21 @@ def f(u):
 
 X, Y, J = collect_information(f, N, n)
 
-decoupling, _ = decoupling_basic(X, Y, J, rank, verbose=1)
+W, V, H, R = CMTF_SSD(J, Y, X, rank, verbose=1)
 
-x = jnp.array([0.5, 0.5, 0.5])
+Z = X @ V
 
-print(f(x))
-print(decoupling(x))
+for r in range(rank):
+    zr = Z[:, r]
+    idx = jnp.argsort(zr)
+    plt.scatter(zr[idx], R[:, r][idx])
+
+plt.savefig('test.png')
+
+internals = fit_internals(Z, R)
+
+def inference(x):
+    return W @ internals(V.T @ x)
+
+print(inference(jnp.array([0.5, 0.5, 0.5])))
+print(f(jnp.array([0.5, 0.5, 0.5])))

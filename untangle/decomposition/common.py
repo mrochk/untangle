@@ -5,6 +5,7 @@ from beartype import beartype
 from beartype.typing import Tuple 
 
 from untangle.utils import get_random_key
+from untangle.ops import khatri_rao
 
 def init_cpd(tensor: Float[Array, 'n m N'], rank: int, key = get_random_key()):
     n, m, N = tensor.shape
@@ -53,9 +54,3 @@ def column_normalize(factor: Float[Array, '_ r']) -> Tuple[Float[Array, '_ r'], 
         factor = factor.at[:, r].set(column / norm)
 
     return factor, jnp.array(weights)
-
-@jaxtyped(typechecker=beartype)
-def khatri_rao(A: Float[Array, 'm k'], B: Float[Array, 'n k']):
-    m, k = A.shape
-    n, _ = B.shape
-    return (A[:, None, :] * B[None, :, :]).reshape(m*n, k)

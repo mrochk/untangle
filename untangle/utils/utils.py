@@ -59,5 +59,6 @@ def reconstruct_tensor(factors, weights):
 
     return tensor
 
-def relative_error(tensor, factors, weights):
+def relative_error(tensor, factors, weights = None):
+    if weights is None: weights = jnp.ones(factors[0].shape[1])
     return jnp.linalg.norm(tensor - reconstruct_tensor(factors, weights)) / jnp.linalg.norm(tensor)
