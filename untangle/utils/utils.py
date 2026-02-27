@@ -24,14 +24,16 @@ def collect_information(
     Float[Array, 'N n'], 
     Float[Array, 'n m N'],
 ]:
+    '''Collect outputs and stacked jacobian of function with respect to X.'''
+
     assert(callable(function))
 
     lo, hi = range
-
-    jacobian = jax.jacobian(function)
     X = jax.random.uniform(key, shape=(N, m), minval=lo, maxval=hi)
-    Y = jnp.stack([function(x) for x in X], axis=0)
-    J = jnp.stack([jacobian(x) for x in X], axis=2)
+
+    Y = jax.vmap(function)(X)
+    J = jax.vmap(jax.jacobian(function))(X).transpose((1, 2, 0))
+
     return X, Y, J
 
 def make_polynomial(coefs: Float[Array, 'd']) -> Callable:

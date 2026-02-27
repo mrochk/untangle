@@ -73,7 +73,7 @@ def decoupling_CMTF_SSD(
         if iteration > 0:
             diff = abs(error - errors[-1])
             log(f'iteration {iteration+1}: error = {error:.4f}, diff = {diff:.8f}')
-            if diff < tol * norm: log(f'stopping at iteration {iteration+1}'); break
+            #if diff < tol * norm: log(f'stopping at iteration {iteration+1}'); break
 
         else: log(f'iter {iteration+1}: error = {error:.4f}')
         errors.append(error)

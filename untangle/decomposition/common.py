@@ -7,6 +7,7 @@ from beartype.typing import Tuple
 from untangle.utils import get_random_key
 from untangle.ops import khatri_rao
 
+@jaxtyped(typechecker=beartype)
 def init_cpd(tensor: Float[Array, 'n m N'], rank: int, key = get_random_key()):
     n, m, N = tensor.shape
 
@@ -16,8 +17,10 @@ def init_cpd(tensor: Float[Array, 'n m N'], rank: int, key = get_random_key()):
 
     return W, V, H
 
+@jax.jit(static_argnames=('mode',))
+@jaxtyped(typechecker=beartype)
 def solve_subproblem(
-    unfolded, 
+    unfolded: Array, 
     W: Float[Array, 'n r'], 
     V: Float[Array, 'm r'],
     H: Float[Array, 'N r'], 
@@ -44,6 +47,7 @@ def solve_subproblem(
             AA = W.T @ W
             return unfolded @ KR @ jnp.linalg.pinv(BB * AA)
 
+@jax.jit
 def column_normalize(factor: Float[Array, '_ r']) -> Tuple[Float[Array, '_ r'], Float[Array, 'r']]:
     rank = factor.shape[1]; weights = []
 

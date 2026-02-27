@@ -29,9 +29,10 @@ def f(u):
         -2 * u1**2 + 4 * u1 * u3 + 4 * u1 - 2 * u3**2 - 3 * u3 - u2 - 8,
     ])
 
+print('info', flush=True)
 X, Y, J = collect_information(f, N, n)
 
-W, V, H, R = decoupling_CMTF_SSD(J, Y, X, rank, verbose=1)
+W, V, H, R = decoupling_CMTF_SSD(J, Y, X, rank, verbose=1, max_iters=50)
 
 Z = X @ V
 
