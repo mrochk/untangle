@@ -2,20 +2,21 @@ import random
 import jax, jax.numpy as jnp
 from functools import partial
 
-from beartype import beartype
-from beartype.typing import Callable, Tuple, Optional
 from jaxtyping import jaxtyped, Float, Array
+from beartype.typing import Callable, Tuple, Optional
+from beartype import beartype
 
-def make_log(verbose: int): return lambda *args: print(*args) if verbose > 0 else None
+def make_log(verbose: int) -> Callable[[], None]:
+    return (lambda *args: print(*args) if verbose > 0 else None)
 
 def get_random_key() -> Array:
-    random_int = random.randint(0, 1000)
+    random_int = random.randint(0, 10_000)
     return jax.random.key(random_int)
 
 @jaxtyped(typechecker=beartype)
 def collect_information(
-    function: Callable[[Array], Array], 
-    N: int, m: int, range = (0, 1), 
+    function: Callable[[Array], Array],
+    N: int, m: int, range = (0, 1),
     key: Array = get_random_key(),
 ) -> Tuple[Float[Array, 'N m'], Float[Array, 'N n'], Float[Array, 'n m N']]:
 
@@ -39,12 +40,11 @@ def make_polynomial(coefs: Float[Array, 'd']) -> Callable:
 
 def make_polynomials(coefs: Float[Array, 'n d']) -> Callable:
     polynomials = [make_polynomial(c) for c in coefs]
-    def _(x): return jnp.array([f(xi) for f, xi in zip(polynomials, x)])
-    return _
+    return (lambda x: jnp.array([f(xi) for f, xi in zip(polynomials, x)]))
 
 @jax.jit
 def reconstruct_tensor(
-    factors: Tuple[Float[Array, 'n r'], Float[Array, 'm r'], Float[Array, 'N r']], 
+    factors: Tuple[Float[Array, 'n r'], Float[Array, 'm r'], Float[Array, 'N r']],
     weights: Float[Array, 'r'],
 ) -> Float[Array, 'n m N']:
     W, V, H = factors
@@ -61,9 +61,9 @@ def reconstruct_tensor(
 
 @jax.jit
 def relative_error(
-    tensor: Float[Array, 'n m N'], 
-    factors: Tuple[Float[Array, 'n r'], Float[Array, 'm r'], Float[Array, 'N r']], 
+    tensor: Float[Array, 'n m N'],
+    factors: Tuple[Float[Array, 'n r'], Float[Array, 'm r'], Float[Array, 'N r']],
     weights: Optional[Float[Array, 'r']] = None,
 ) -> Float[Array, '']:
-    if weights is None: weights = jnp.ones(factors[0].shape[1]) 
+    if weights is None: weights = jnp.ones(factors[0].shape[1])
     return jnp.linalg.norm(tensor - reconstruct_tensor(factors, weights)) / jnp.linalg.norm(tensor)
