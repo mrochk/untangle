@@ -3,7 +3,7 @@ from functools import partial
 
 from jaxtyping import jaxtyped, Array, Float
 from beartype import beartype 
-from beartype.typing import Tuple 
+from beartype.typing import Tuple, Optional 
 
 from untangle.utils import relative_error, get_random_key
 from untangle.ops import unfold_kolda
@@ -14,7 +14,7 @@ def cpd(
     tensor: Float[Array, 'n m N'],
     rank: int,
     max_iters: int = 100,
-    random_state = get_random_key(),
+    random_state: Optional[Array] = None,
     tol: float = 1e-6,
     verbose: bool = False,
 ) -> Tuple[
@@ -25,6 +25,8 @@ def cpd(
     log = lambda *args: print(*args) if verbose else None
 
     norm = jnp.linalg.norm(tensor)
+
+    if random_state is None: random_state = get_random_key()
 
     factors, weights = init_cpd(tensor, rank, key=random_state), jnp.ones(rank)
     W, V, H = factors

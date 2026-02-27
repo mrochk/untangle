@@ -1,6 +1,6 @@
 # untangle
 
-Tensor decoupling in Jax. Collection of algorithms for decoupling multivariate functions using tensor decompositions.
+Fast tensor decoupling in Jax. Collection of algorithms for decoupling multivariate functions using tensor decompositions.
 
 This project was built using `uv` (https://docs.astral.sh/uv/). 
 

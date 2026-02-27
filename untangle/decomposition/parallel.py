@@ -1,17 +1,32 @@
+import jax
 from tqdm import tqdm
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from jaxtyping import jaxtyped, Float, Array
+from beartype.typing import Optional
+from beartype import beartype
+
 from untangle.utils import get_random_key, make_log
 from .cpd import cpd
 
-def run_many_cpd(tensor, rank, n: int = mp.cpu_count(), verbose: int = 0):
+@jaxtyped(typechecker=beartype)
+def run_many_cpd(
+    tensor: Float[Array, 'n m N'], 
+    rank: int, 
+    n: int = mp.cpu_count(), 
+    random_state: Optional[Array] = None,
+    verbose: int = 0,
+):
+
     '''Runs many CP decompositions in parallel and returns the one with the lowest error.'''
 
     log = make_log(verbose)
 
+    keys = jax.random.split(get_random_key() if random_state is None else random_state, num=n)
+
     def run_once(i):
-        factors, weights, errors = cpd(tensor, rank, verbose=verbose > 1, random_state=get_random_key())
+        factors, weights, errors = cpd(tensor, rank, verbose=verbose > 1, random_state=keys[i])
         log(f'run {i}: {errors[-1]:.5f} ({len(errors)} iters)')
         return factors, weights, errors[-1]
 
