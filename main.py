@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import make_smoothing_spline
 
 from untangle.algorithm import decoupling_CMTF_SSD
+from untangle.decomposition import search_rank
 from untangle.utils import collect_information
 
 def fit_internals(Z, R):
@@ -19,7 +20,7 @@ def fit_internals(Z, R):
 
     return g
 
-n = 3; m = 3; N = 100; rank = 4 # we know that this is a rank four
+n = 3; m = 3; N = 50; rank = 4 # we know that this is a rank four
 
 def f(u):
     u1, u2, u3 = u
@@ -32,7 +33,10 @@ def f(u):
 print('info', flush=True)
 X, Y, J = collect_information(f, N, n)
 
-W, V, H, R = decoupling_CMTF_SSD(J, Y, X, rank, verbose=1, max_iters=50)
+rank = search_rank(J)
+print(rank)
+
+W, V, H, R = decoupling_CMTF_SSD(J, Y, X, rank, lam=0.01, verbose=1, max_iters=50)
 
 Z = X @ V
 

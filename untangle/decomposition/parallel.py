@@ -4,7 +4,7 @@ import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from jaxtyping import jaxtyped, Float, Array
-from beartype.typing import Optional
+from beartype.typing import Optional, Tuple
 from beartype import beartype
 
 from untangle.utils import get_random_key, make_log
@@ -17,7 +17,7 @@ def run_many_cpd(
     n: int = mp.cpu_count(), 
     random_state: Optional[Array] = None,
     verbose: int = 0,
-):
+) -> Tuple[Tuple[Float[Array, 'n r'], Float[Array, 'm r'], Float[Array, 'N r']], Float[Array, 'r']]:
 
     '''Runs many CP decompositions in parallel and returns the one with the lowest error.'''
 
