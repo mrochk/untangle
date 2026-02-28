@@ -1,6 +1,6 @@
 # untangle
 
-![Jax Logo](jax_logo.png)
+![Logo](logo.png)
 
 Fast tensor decoupling in Jax. Collection of algorithms for decoupling multivariate functions using tensor decompositions.
 
