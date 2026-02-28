@@ -7,17 +7,21 @@ from untangle.decomposition import search_rank
 from untangle.utils import collect_information
 
 def fit_internals(Z, R):
+
     internals = []
+
     for rank in range(R.shape[1]):
+
         rr = R[:, rank]
         zr = Z[:, rank]
+
         idx = jnp.argsort(zr)
+
         g = make_smoothing_spline(zr[idx], rr[idx])
+
         internals.append(g)
 
-    def g(x):
-        return jnp.array([gi(xi) for gi, xi in zip(internals, x)])
-
+    def g(x): return jnp.array([gi(xi) for gi, xi in zip(internals, x)])
     return g
 
 n = 3; m = 3; N = 50; rank = 4 # we know that this is a rank four
@@ -30,11 +34,10 @@ def f(u):
         -2 * u1**2 + 4 * u1 * u3 + 4 * u1 - 2 * u3**2 - 3 * u3 - u2 - 8,
     ])
 
-print('info', flush=True)
 X, Y, J = collect_information(f, N, n)
 
 rank = search_rank(J)
-print(rank)
+print('rank', rank)
 
 W, V, H, R = decoupling_CMTF_SSD(J, Y, X, rank, lam=0.01, verbose=1, max_iters=50)
 
